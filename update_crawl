@@ -1,0 +1,92 @@
+# -*- coding:utf-8 -*-
+import requests
+from lxml import etree
+import time
+import random
+import pandas as pd
+
+import pymysql
+def get_page(i):
+    headers = {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+        'Connection': 'keep-alive',
+        'Cookie': 'kztoken=nJail6zJp6iXaJqWl3BlYGFwaZaV; his=a%3A10%3A%7Bi%3A0%3Bs%3A28%3A%22nJail6zJp6iXaJqWl3BlYGFwZZOW%22%3Bi%3A1%3Bs%3A28%3A%22nJail6zJp6iXaJqWl3BlYGFwZZyU%22%3Bi%3A2%3Bs%3A28%3A%22nJail6zJp6iXaJqWl3BlYGFwZpSZ%22%3Bi%3A3%3Bs%3A28%3A%22nJail6zJp6iXaJqWl3BlYGFwZpya%22%3Bi%3A4%3Bs%3A28%3A%22nJail6zJp6iXaJqWl3BlYGFwZ5OT%22%3Bi%3A5%3Bs%3A28%3A%22nJail6zJp6iXaJqWl3BlYGFwZ5mY%22%3Bi%3A6%3Bs%3A28%3A%22nJail6zJp6iXaJqWl3BlYGFwaJSS%22%3Bi%3A7%3Bs%3A28%3A%22nJail6zJp6iXaJqWl3BlYGFwaJWU%22%3Bi%3A8%3Bs%3A28%3A%22nJail6zJp6iXaJqWl3BlYGFwaJiY%22%3Bi%3A9%3Bs%3A28%3A%22nJail6zJp6iXaJqWl3BlYGFwaZaV%22%3B%7D; acw_tc=707c9f9415730082259622365e4f58ea115862da5acc46bff21259d9f0c8ef; think_language=zh-CN; PHPSESSID=lrar70jh1ig5gt3jpsj6lne304; hmap_show=true; _ga=GA1.2.1853614770.1573008278; _gid=GA1.2.10628983.1573008278; Hm_lvt_65968db3ac154c3089d7f9a4cbb98c94=1573008278; linchuangshiyan_show=true; kztoken=nJail6zJp6iXaJqWl3BlYGFwaZiS; his=a%3A10%3A%7Bi%3A0%3Bs%3A28%3A%22nJail6zJp6iXaJqWl3BlYGFwZZyU%22%3Bi%3A1%3Bs%3A28%3A%22nJail6zJp6iXaJqWl3BlYGFwZpSZ%22%3Bi%3A2%3Bs%3A28%3A%22nJail6zJp6iXaJqWl3BlYGFwZpya%22%3Bi%3A3%3Bs%3A28%3A%22nJail6zJp6iXaJqWl3BlYGFwZ5OT%22%3Bi%3A4%3Bs%3A28%3A%22nJail6zJp6iXaJqWl3BlYGFwZ5mY%22%3Bi%3A5%3Bs%3A28%3A%22nJail6zJp6iXaJqWl3BlYGFwaJSS%22%3Bi%3A6%3Bs%3A28%3A%22nJail6zJp6iXaJqWl3BlYGFwaJWU%22%3Bi%3A7%3Bs%3A28%3A%22nJail6zJp6iXaJqWl3BlYGFwaJiY%22%3Bi%3A8%3Bs%3A28%3A%22nJail6zJp6iXaJqWl3BlYGFwaZaV%22%3Bi%3A9%3Bs%3A28%3A%22nJail6zJp6iXaJqWl3BlYGFwaZiS%22%3B%7D; Hm_lpvt_65968db3ac154c3089d7f9a4cbb98c94=1573008898',
+        'Host': 'db.yaozh.com',
+        'Referer': 'https://db.yaozh.com/hmap',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'same-origin',
+        'Sec-Fetch-User': '?1',
+        'Upgrade-Insecure-Requests': '1',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36'
+    }
+    url = 'https://db.yaozh.com/hmap/{}.html'.format(str(i))
+    response = requests.get(url=url, headers=headers)
+    if response.status_code == 200:
+        return response.content
+    else:
+        return None
+
+def get_parse(html):
+
+    items = etree.HTML(html)
+
+    table = items.xpath('//table[@class="table"]/tbody')[0]
+    head = table.xpath('./tr/th/text()')
+    content = table.xpath('./tr/td')
+    content = [''.join(i.xpath('.//text()')).strip() for i in content]
+
+    return dict(zip(head, content))
+
+
+if __name__=='__main__':
+    ret = []
+    for i in range(83221,83333): #83221  84880
+        print(i)
+        html=get_page(i)
+        ret.append(get_parse(html))
+        time.sleep(random.random()*2)
+
+
+    df = pd.DataFrame(ret)
+    out_info=df['医院名称']
+    print(out_info)
+    info=df[['医院名称','医院别名','医院类型','医院等级','建院年份','医院科室','医院设备','床位数','门诊量(日)','经营方式',
+             '负责人','员工数','医院网址','电话','传真','邮箱','省','市','县','医院地址','邮编','乘车路线','医院简介']]
+
+    name_mapper = {
+        '自增序列':'sq_no',
+        '医院名称': 'hosp_name',
+        '医院别名': 'hosp_alias_name',
+        '医院类型': 'hosp_type',
+        '医院等级': 'hospital_level',
+        '建院年份': 'founded_date',
+        '医院科室': 'dept',
+        '医院设备': 'instrument',
+        '床位数': 'bed_num',
+        '门诊量(日)':'outpatient_amount',
+        '经营方式': 'operation_way',
+        '负责人': 'commander',
+        '员工数': 'staff_num',
+        '医院网址': 'website',
+        '电话': 'phone',
+        '传真':'fax',
+        '邮箱': 'e_mail',
+        '省': 'pr',
+        '市': 'city',
+        '县': 'dist',
+        '医院地址': 'addr_detail',
+        '邮编': 'zip_code',
+        '乘车路线': 'route',
+        '医院简介': 'hosp_summarized',
+    }
+
+    df.columns = [name_mapper[i] for i in df.columns]
+    df.to_csv('1.csv')
+
+    df = pd.read_csv('1.csv')
+
+    from sqlalchemy import create_engine
+    engine = create_engine("mysql+pymysql://ranxu:Ran_Xu2019@10.10.172.148:3306/dspdb_hsp_crawl")
+    df.to_sql('hosp_rawinfo', index=False, if_exists='append', con=engine)
