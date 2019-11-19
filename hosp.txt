@@ -83,3 +83,20 @@ mysql语句实例
 UPDATE hosp_rawinfo set remark_web_yu=true where web_id in(SELECT web_id from boss_hosp_master);
 -- alter table boss_hosp_master add webs VARCHAR(64) after website;
 -- alter TABLE hosp_rawinfo add remark_web_yu text after remark;
+
+
+对mysql表中指定字段进行分段
+
+SELECT
+		hosp_rawinfo.sq_no,
+    SUBSTRING_INDEX(
+        SUBSTRING_INDEX(hosp_rawinfo.ph,';',boss_hosp_master.sq_no),
+        ';',- 1) AS ph
+FROM
+    boss_hosp_master
+JOIN hosp_rawinfo 
+  ON boss_hosp_master.sq_no < 
+			(LENGTH(hosp_rawinfo.ph) - LENGTH(REPLACE(hosp_rawinfo.ph, ';', ''))+2);
+			
+			
+
