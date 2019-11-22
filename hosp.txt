@@ -100,3 +100,82 @@ JOIN hosp_rawinfo
 			
 			
 
+
+
+
+
+SELECT * from
+
+(SELECT c.sq_no,c.ph,b.hosp_master_code from 
+(SELECT
+		hosp_rawinfo.sq_no,
+    SUBSTRING_INDEX(
+        SUBSTRING_INDEX(hosp_rawinfo.ph,';',d.sq_no),
+        ';',- 1) AS ph
+FROM
+    dict_dist_class_i d
+JOIN hosp_rawinfo 
+  ON d.sq_no < 
+			(LENGTH(hosp_rawinfo.ph) - LENGTH(REPLACE(hosp_rawinfo.ph, ';', ''))+2)) c
+join boss_hosp_master b on c.sq_no=b.sq_no) temp
+
+
+
+select hosp_name,count(1) from hosp_rawinfo group by hosp_name having count(1)>1;
+/*
+通过having来筛选出重复的数据，比如为空，比如相同名字的
+*/
+
+
+
+
+
+
+UPDATE hosp_rawinfo h
+join 
+
+SELECT t.sq_no,t.ph,t.hosp_master_code from
+(SELECT c.sq_no,c.ph,b.hosp_master_code from 
+(SELECT
+		hosp_rawinfo.sq_no,
+    SUBSTRING_INDEX(
+        SUBSTRING_INDEX(hosp_rawinfo.ph,';',d.sq_no),
+        ';',- 1) AS ph
+FROM
+    dict_dist_class_i d
+JOIN hosp_rawinfo 
+  ON d.sq_no < 
+			(LENGTH(hosp_rawinfo.ph) - LENGTH(REPLACE(hosp_rawinfo.ph, ';', ''))+2)) c
+join boss_hosp_master b on (c.ph=b.ph)) t
+on (h.sq_no=t.sq_no)
+set h.remark_ph=t.hosp_master_code
+
+
+
+
+
+
+
+where与having的区别：主要是因为wehere不能和聚合函数在一起使用，而having正好可以弥补这个缺陷，通常having是与group by 一起使用。
+
+
+
+
+
+项目的总结：
+
+1.表的备份：
+    首先可以一步步的来进行，对于原先的表不应该直接去动它，而是在各种你建立的表上去改动它，
+最好你开始就把自己建立的表给备份好，防止后期你把建立的表结构和数据都弄坏而找不到原始的数据。
+create table back_hosp_crawlinfo insert(SELECT * from hosp_rawinfo)
+
+2.数据分析：
+    一开始不需要直接就开始对数据进行处理，把需要处理的数据先找出来，看看有没有什么不一样的，
+需要处理成什么样，自己心里大概有个数，例如你需要匹配两个表的数据是否一样，就要看通过哪些字段
+来判断是否重复了，而如果重复了又怎么操作，是直接的删除吗还是在后面标记这些数据（显然在后面标注）
+比较好，标记的又要考虑怎么来直观的和其他的标记做比较呢?()接着需要考虑怎么匹配两个表的数据
+（这里会涉及数据的剪切）怎么去剪切又是个问题，你不仅要考虑当前的数据中特别的数据，还有很多是
+我们无法通过人工的方法来找出来的，这就需要我们在剪切的时候把更多的相类似的写进去了（这也是非常重要的细节）
+
+3分析结果：
+结果筛选出来并未结束，这时需要通过人工去验证一些数据对不对，找出错误的数据，重复的数据。 
