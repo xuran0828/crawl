@@ -36,3 +36,19 @@ if repetition:
         if next_page is not None:  # 判断是否存在下一页
             next_page = response.urljoin(next_page)
             yield scrapy.Request(next_page, callback=self.parse)  # 提交给parse继续抓取下一页
+            
+            
+            
+ 常见的数据清洗:
+ strip(): 去除特定的字符，比如空格
+ 
+ extract():加上extract()是提取html里的内容，不加是直接获取带有html的内容
+response.xpath('//*[@id="list"]/table/tbody/tr').extract()[0]
+response.xpath('//*[@id="list"]/table/tbody/tr')[0].extract()
+这两个一个是先得到一个HTML内容组成的列表，再取第一个元素；一个是先得到SelectorList第一个元素，再提取成HTML内容，总之返回的结果一样。
+
+replace():用法replace('\n','')，返回的是list
+global_step = ckpt.split(’/’)[-1].split(’-’)[-1]
+即对字符串"MNIST_model/mnist_model-29001"进行分割
+分隔结果为：29001，返回的是字符串
+
