@@ -1,0 +1,38 @@
+对于爬虫信息很多的信息表市不存在的，如果是直接的把数据插入数据库中会出现数据的错误的，所以需要进行判断再进行添加到数据库中
+if quote:
+    quote = quote[0].strip()
+else:
+    quote = ' '
+item['quote'] = quote
+
+
+数据查重：可能在执行的过程中会不止一次的将数据导入进去，这就出现了数据库中出现大量的重复数据，那么就要增加去重处理了
+这里使用self.cursor.fetchone()方法来判断有没有重复数据，在每次插入数据前，先判断插入item是否已在表中。
+通过属性img_url查找该item在表中是否存在，如果存在，执行定义的操作，简单起见，这里直接丢掉了，不过可以执行update语句对数据进行更新。
+# 查重处理
+self.cursor.execute(
+    """select * from doubanmovie where img_url = %s""",
+    item['img_url'])
+# 是否有重复数据
+repetition = self.cursor.fetchone()
+
+# 重复
+if repetition:
+  pass
+  
+ 对于翻页抓取:
+ def parse(self, response):
+        mingyan = response.css('div.quote')
+
+        item = ScrapymysqlItem()  # 实例化item类
+
+        for v in mingyan:  # 循环获取每一条名言里面的：名言内容、作者、标签
+            item['cont'] = v.css('.text::text').extract_first()  # 提取名言
+            tags = v.css('.tags .tag::text').extract()  # 提取标签
+            item['tag'] = ','.join(tags)  # 数组转换为字符串
+            yield item  # 把取到的数据提交给pipline处理
+
+        next_page = response.css('li.next a::attr(href)').extract_first()  # css选择器提取下一页链接
+        if next_page is not None:  # 判断是否存在下一页
+            next_page = response.urljoin(next_page)
+            yield scrapy.Request(next_page, callback=self.parse)  # 提交给parse继续抓取下一页
